@@ -54,7 +54,7 @@ public final class Awaitor {
         } else {
             cond.await(timeLeft(), TimeUnit.MILLISECONDS);
         }
-        return isTimeoutExpired();
+        return !isTimeoutExpired();
     }
 
     private boolean isTimeoutExpired() {
