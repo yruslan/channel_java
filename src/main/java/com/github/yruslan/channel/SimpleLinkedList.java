@@ -24,7 +24,7 @@
  * For more information, please refer to <http://opensource.org/licenses/MIT>
  */
 
-package com.github.yruslan.channel.impl;
+package com.github.yruslan.channel;
 
 import java.util.NoSuchElementException;
 import java.util.function.Consumer;
@@ -70,7 +70,7 @@ public class SimpleLinkedList<T> {
     }
 
     synchronized public void append(T a) {
-        Elem<T> newElement = new Elem<T>(a, null);
+        Elem<T> newElement = new Elem<>(a, null);
 
         if (first == null) {
             first = newElement;

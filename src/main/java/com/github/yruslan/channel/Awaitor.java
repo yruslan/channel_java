@@ -24,7 +24,7 @@
  * For more information, please refer to <http://opensource.org/licenses/MIT>
  */
 
-package com.github.yruslan.channel.impl;
+package com.github.yruslan.channel;
 
 import java.time.Duration;
 import java.time.Instant;
