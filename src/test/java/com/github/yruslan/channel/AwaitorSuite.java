@@ -24,17 +24,17 @@
  * For more information, please refer to <http://opensource.org/licenses/MIT>
  */
 
-package com.github.yruslan.channel.impl;
+package com.github.yruslan.channel;
 
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Arrays;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class AwaitorSuite {
     @Test
