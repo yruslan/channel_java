@@ -31,16 +31,16 @@ import java.time.Instant;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 
-public final class Awaitor {
+public final class Awaiter {
     private final long timeoutMilli;
     private final Instant startInstant;
 
-    Awaitor() {
+    Awaiter() {
         timeoutMilli = Long.MAX_VALUE;
         startInstant = Instant.now();
     }
 
-    Awaitor(long timeoutMilli) {
+    Awaiter(long timeoutMilli) {
         this.timeoutMilli = timeoutMilli;
         startInstant = Instant.now();
     }
@@ -51,17 +51,9 @@ public final class Awaitor {
         }
         if (timeoutMilli == Long.MAX_VALUE) {
             cond.await();
+            return true;
         } else {
-            cond.await(timeLeft(), TimeUnit.MILLISECONDS);
-        }
-        return !isTimeoutExpired();
-    }
-
-    private boolean isTimeoutExpired() {
-        if (timeoutMilli == Long.MAX_VALUE) {
-            return false;
-        } else {
-            return elapsedTime() >= timeoutMilli;
+            return cond.await(timeLeft(), TimeUnit.MILLISECONDS);
         }
     }
 

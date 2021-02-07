@@ -36,24 +36,24 @@ import java.util.concurrent.locks.ReentrantLock;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class AwaitorSuite {
+public class AwaiterSuite {
     @Test
     public void immediateAwaitorShouldAlwaysReturnFalse() {
-        Awaitor awaitor = new Awaitor(0L);
+        Awaiter awaiter = new Awaiter(0L);
         ReentrantLock lock = new ReentrantLock();
         Condition cond = lock.newCondition();
 
-        assertFalse(doAwait(awaitor, lock,cond));
+        assertFalse(doAwait(awaiter, lock,cond));
     }
 
     @Test
     public void limitedTimeAwaitorsShouldFailOnTimeout() {
-        Awaitor awaitor = new Awaitor(100L);
+        Awaiter awaiter = new Awaiter(100L);
         ReentrantLock lock = new ReentrantLock();
         Condition cond = lock.newCondition();
 
         Instant start = Instant.now();
-        boolean result = doAwait(awaitor, lock,cond);
+        boolean result = doAwait(awaiter, lock,cond);
         Instant finish = Instant.now();
 
         assertFalse(result);
@@ -62,7 +62,7 @@ public class AwaitorSuite {
 
     @Test
     public void limitedTimeAwaitorsShouldReturnTrue() {
-        Awaitor awaitor = new Awaitor(200L);
+        Awaiter awaiter = new Awaiter(200L);
         ReentrantLock lock = new ReentrantLock();
         Condition cond = lock.newCondition();
 
@@ -80,7 +80,7 @@ public class AwaitorSuite {
         thread.start();
 
         Instant start = Instant.now();
-        boolean result = doAwait(awaitor, lock,cond);
+        boolean result = doAwait(awaiter, lock,cond);
         Instant finish = Instant.now();
 
         assertTrue(result);
@@ -89,7 +89,7 @@ public class AwaitorSuite {
 
     @Test
     public void unlimitedTimeAwaitorsShouldReturnTrue() {
-        Awaitor awaitor = new Awaitor();
+        Awaiter awaiter = new Awaiter();
         ReentrantLock lock = new ReentrantLock();
         Condition cond = lock.newCondition();
 
@@ -107,7 +107,7 @@ public class AwaitorSuite {
         thread.start();
 
         Instant start = Instant.now();
-        boolean result = doAwait(awaitor, lock,cond);
+        boolean result = doAwait(awaiter, lock,cond);
         Instant finish = Instant.now();
 
         assertTrue(result);
@@ -116,17 +116,18 @@ public class AwaitorSuite {
 
     @Test
     public void unlimitedTimeUnfulfilledAwaitorShouldNeverReturn() {
-        Awaitor awaitor = new Awaitor();
+        Awaiter awaiter = new Awaiter();
         ReentrantLock lock = new ReentrantLock();
         Condition cond = lock.newCondition();
 
         boolean[] result = new boolean[1];
 
-        Thread thread = new Thread(() -> result[0] = doAwait(awaitor, lock,cond));
+        Thread thread = new Thread(() -> result[0] = doAwait(awaiter, lock,cond));
         thread.start();
 
         Instant start = Instant.now();
         try {
+            //noinspection SynchronizationOnLocalVariableOrMethodParameter
             synchronized (thread) {
                 thread.wait(100L);
             }
@@ -139,11 +140,11 @@ public class AwaitorSuite {
         assertTrue(Duration.between(start, finish).toMillis() >= 100L);
     }
 
-    private boolean doAwait(Awaitor awaitor, ReentrantLock lock, Condition cond) {
+    private boolean doAwait(Awaiter awaiter, ReentrantLock lock, Condition cond) {
         lock.lock();
         boolean isConditionMet = true;
         try {
-            isConditionMet = awaitor.await(cond);
+            isConditionMet = awaiter.await(cond);
         } catch (InterruptedException e) {
             e.printStackTrace();
         } finally {
