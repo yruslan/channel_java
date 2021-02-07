@@ -27,11 +27,11 @@
 package com.github.yruslan.channel;
 
 public interface WriteChannel<T> extends ChannelLike {
-    void send(T value);
+    void send(T value) throws InterruptedException;
     boolean trySend(T value);
-    boolean trySend(T value, long timeoutMs);
+    boolean trySend(T value, long timeoutMs) throws InterruptedException;
 
     Selector sender(T value, Runnable action);
 
-    void close();
+    void close() throws InterruptedException;
 }

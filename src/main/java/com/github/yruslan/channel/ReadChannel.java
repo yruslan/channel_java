@@ -30,9 +30,9 @@ import java.util.Optional;
 import java.util.function.Consumer;
 
 public interface ReadChannel<T> extends ChannelLike {
-    T recv();
+    T recv() throws InterruptedException;
     Optional<T> tryRecv();
-    Optional<T> tryRecv(long timeoutMs);
+    Optional<T> tryRecv(long timeoutMs) throws InterruptedException;
 
     Selector recver(Consumer<T> action);
 
