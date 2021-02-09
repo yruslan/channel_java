@@ -35,6 +35,6 @@ public abstract class Selector {
         this.channel = channel;
     }
 
-    abstract boolean sendRect();
+    abstract boolean sendRecv();
     abstract void afterAction();
 }
