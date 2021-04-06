@@ -28,17 +28,65 @@ package com.github.yruslan.channel;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class ChannelSuite  {
+    ExecutorService executor = Executors.newFixedThreadPool(10);
+
     @Test
-    public void asyncChannelsShouldWOrkInSingleThread() throws InterruptedException {
+    public void asyncChannelsShouldWorkInSingleThread() throws InterruptedException {
         Channel<Integer> ch1 = Channel.make(1);
 
         ch1.send(1);
         int i = ch1.recv();
 
         assertEquals(i, 1);
+    }
+
+    @Test
+    public void asyncChannelsShouldPreserveOrder() throws InterruptedException {
+        Channel<Integer> ch = Channel.make(5);
+
+        ch.send(1);
+        ch.send(2);
+        ch.send(3);
+
+        int v1 = ch.recv();
+
+        ch.send(4);
+
+        int v2 = ch.recv();
+        int v3 = ch.recv();
+        int v4 = ch.recv();
+
+        assertEquals(v1, 1);
+        assertEquals(v2, 2);
+        assertEquals(v3, 3);
+        assertEquals(v4, 4);
+    }
+
+    @Test
+    public void closedChannelCanReceivePendingMessages() throws InterruptedException {
+        Channel<Integer> ch = Channel.make(3);
+
+        ch.send(1);
+        ch.send(2);
+        ch.send(3);
+
+        int v1 = ch.recv();
+        ch.close();
+        int v2 = ch.recv();
+        int v3 = ch.recv();
+
+        assertEquals(v1, 1);
+        assertEquals(v2, 2);
+        assertEquals(v3, 3);
+
+        assertThrows(IllegalStateException.class, ch::recv);
     }
 
 }
