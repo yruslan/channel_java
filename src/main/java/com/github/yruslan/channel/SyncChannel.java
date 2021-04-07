@@ -44,7 +44,7 @@ public class SyncChannel<T> extends Channel<T> {
                 cwr.signalAll();
 
                 writers += 1;
-                while (!syncValue.isPresent()) {
+                while (syncValue.isPresent()) {
                     cwr.await();
                 }
                 writers -= 1;
@@ -66,14 +66,14 @@ public class SyncChannel<T> extends Channel<T> {
             }
 
             writers += 1;
-            while (!syncValue.isPresent() && !closed) {
+            while (syncValue.isPresent() && !closed) {
                 cwr.await();
             }
             if (!closed) {
                 syncValue = Optional.of(value);
                 notifyReaders();
 
-                while (!syncValue.isPresent() && !closed) {
+                while (syncValue.isPresent() && !closed) {
                     cwr.await();
                 }
                 notifyWriters();

@@ -26,18 +26,18 @@
 
 package com.github.yruslan.channel;
 
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.ArrayList;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
-public class ChannelSuite  {
-    ExecutorService executor = Executors.newFixedThreadPool(10);
-
+public class ChannelSuite {
     @Test
+    @DisplayName("work for asynchronous channels in a single threaded setup")
     public void asyncChannelsShouldWorkInSingleThread() throws InterruptedException {
         Channel<Integer> ch1 = Channel.make(1);
 
@@ -48,6 +48,7 @@ public class ChannelSuite  {
     }
 
     @Test
+    @DisplayName("async sent messages should arrive in FIFO order")
     public void asyncChannelsShouldPreserveOrder() throws InterruptedException {
         Channel<Integer> ch = Channel.make(5);
 
@@ -70,6 +71,7 @@ public class ChannelSuite  {
     }
 
     @Test
+    @DisplayName("closed channel can still be used to receive pending messages")
     public void closedChannelCanReceivePendingMessages() throws InterruptedException {
         Channel<Integer> ch = Channel.make(3);
 
@@ -88,5 +90,70 @@ public class ChannelSuite  {
 
         assertThrows(IllegalStateException.class, ch::recv);
     }
+
+    @Test
+    @DisplayName("closing a synchronous channel should block until the pending message is not received")
+    public void closingSyncChannelShouldBlockIfMsgIsNotReceived() throws InterruptedException {
+        Channel<Integer> ch = Channel.make();
+
+        Thread thread = new Thread(() -> {
+            try {
+                ch.close();
+            } catch (InterruptedException ignored) {
+            }
+        });
+        thread.start();
+
+        ch.send(1);
+
+        thread.join(50);
+        assertTrue(thread.isAlive());
+
+        thread.interrupt();
+    }
+
+    @Test
+    @DisplayName("closing a synchronous channel should block until the pending message is not received")
+    public void closingSyncChannelShouldBlockUntilMsgIsReceived() throws InterruptedException {
+        Channel<Integer> ch = Channel.make();
+        ArrayList<Integer> v = new ArrayList<>();
+        Instant start = Instant.now();
+
+        runInThread(() -> {
+            Thread.sleep(120);
+            synchronized (v) {
+                v.add(ch.recv());
+            }
+        });
+
+        runInThread(() ->
+            ch.send(1)
+        );
+
+        Thread thread3 = runInThread(() -> {
+            Thread.sleep(50);
+            ch.close();
+        });
+
+        thread3.join(2000);
+        Instant finish = Instant.now();
+
+        assertTrue(v.size() > 0);
+        assertTrue(v.contains(1));
+        assertTrue(Duration.between(start, finish).toMillis() > 60);
+        assertTrue(Duration.between(start, finish).toMillis() < 2000);
+    }
+
+    private Thread runInThread(Interruptable f) {
+        Thread thread = new Thread(() -> {
+            try {
+                f.run();
+            } catch (InterruptedException ignored) {
+            }
+        });
+        thread.start();
+        return thread;
+    }
+
 
 }
