@@ -32,6 +32,7 @@ import org.junit.jupiter.api.Test;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -96,13 +97,10 @@ public class ChannelSuite {
     public void closingSyncChannelShouldBlockIfMsgIsNotReceived() throws InterruptedException {
         Channel<Integer> ch = Channel.make();
 
-        Thread thread = new Thread(() -> {
-            try {
-                ch.close();
-            } catch (InterruptedException ignored) {
-            }
+        Thread thread = runInThread(() -> {
+            Thread.sleep(10);
+            ch.close();
         });
-        thread.start();
 
         ch.send(1);
 
@@ -141,6 +139,67 @@ public class ChannelSuite {
         assertTrue(v.size() > 0);
         assertTrue(v.contains(1));
         assertTrue(Duration.between(start, finish).toMillis() > 60);
+        assertTrue(Duration.between(start, finish).toMillis() < 2000);
+    }
+
+    @Test
+    @DisplayName("reading a closed channel should throw an exception")
+    public void readingClosedChannelThrows() throws InterruptedException {
+        Channel<Integer> ch = Channel.make(5);
+
+        ch.send(1);
+
+        Integer v = ch.recv();
+        ch.close();
+
+        assertEquals((int) v, 1);
+
+        IllegalStateException ex =  assertThrows(IllegalStateException.class, ch::recv);
+        assertTrue(ex.getMessage().contains("Attempt to receive from a closed channel"));
+    }
+
+    @Test
+    @DisplayName("sending to a closed channel should throw an exception")
+    public void sendingToClosedChannelThrows() throws InterruptedException {
+        Channel<Integer> ch = Channel.make(2);
+
+        boolean ok = ch.trySend(1);
+        assertTrue(ok);
+
+        ch.close();
+
+        IllegalStateException ex =  assertThrows(IllegalStateException.class, () -> ch.send(2));
+
+        assertTrue(ex.getMessage().contains("Attempt to send to a closed channel"));
+
+        Optional<Integer> v1 = ch.tryRecv();
+        Optional<Integer> v2 = ch.tryRecv();
+
+        assertTrue(v1.isPresent());
+        assertEquals((int) v1.get(), 1);
+        assertFalse(v2.isPresent());
+    }
+
+    @Test
+    @DisplayName("sync send/recv should block")
+    public void syncSendRecvShouldBlock() throws InterruptedException {
+        Channel<Integer> ch = Channel.make();
+        ArrayList<Integer> v = new ArrayList<>();
+        Instant start = Instant.now();
+
+        Thread thread = runInThread(() -> {
+           Thread.sleep(100);
+           v.add(ch.recv());
+        });
+
+        ch.send(100);
+
+        thread.join(2000);
+        Instant finish = Instant.now();
+
+        assertTrue(v.size() > 0);
+        assertEquals((int) v.get(0), 100);
+        assertTrue(Duration.between(start, finish).toMillis() >= 100);
         assertTrue(Duration.between(start, finish).toMillis() < 2000);
     }
 
