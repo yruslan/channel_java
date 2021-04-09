@@ -125,7 +125,7 @@ public class ChannelSuite {
         });
 
         runInThread(() ->
-            ch.send(1)
+                ch.send(1)
         );
 
         Thread thread3 = runInThread(() -> {
@@ -154,7 +154,7 @@ public class ChannelSuite {
 
         assertEquals((int) v, 1);
 
-        IllegalStateException ex =  assertThrows(IllegalStateException.class, ch::recv);
+        IllegalStateException ex = assertThrows(IllegalStateException.class, ch::recv);
         assertTrue(ex.getMessage().contains("Attempt to receive from a closed channel"));
     }
 
@@ -168,7 +168,7 @@ public class ChannelSuite {
 
         ch.close();
 
-        IllegalStateException ex =  assertThrows(IllegalStateException.class, () -> ch.send(2));
+        IllegalStateException ex = assertThrows(IllegalStateException.class, () -> ch.send(2));
 
         assertTrue(ex.getMessage().contains("Attempt to send to a closed channel"));
 
@@ -188,8 +188,8 @@ public class ChannelSuite {
         Instant start = Instant.now();
 
         Thread thread = runInThread(() -> {
-           Thread.sleep(100);
-           v.add(ch.recv());
+            Thread.sleep(100);
+            v.add(ch.recv());
         });
 
         ch.send(100);
@@ -201,6 +201,121 @@ public class ChannelSuite {
         assertEquals((int) v.get(0), 100);
         assertTrue(Duration.between(start, finish).toMillis() >= 100);
         assertTrue(Duration.between(start, finish).toMillis() < 2000);
+    }
+
+    @Test
+    @DisplayName("trySend() for sync channels handle non-blocking way when data is available")
+    public void trySendSyncNonBlockingDataAvailable() throws InterruptedException {
+        Channel<String> ch = Channel.make();
+
+        runInThread(ch::recv);
+
+        Thread.sleep(30);
+
+        boolean ok = ch.trySend("test", 0);
+
+        assertTrue(ok);
+    }
+
+    @Test
+    @DisplayName("trySend() for sync channels handle non-blocking way when data is not available")
+    public void trySendSyncNonBlockingDataNotAvailable() throws InterruptedException {
+        Channel<String> ch = Channel.make();
+
+        //ch.trySend("test1", 0);
+        boolean ok = ch.trySend("test2", 0);
+
+        assertFalse(ok);
+    }
+
+    @Test
+    @DisplayName("trySend() for sync channels should return false on a closed channel")
+    public void trySendSyncNonBlockingDataClosedChannel() throws InterruptedException {
+        Channel<Integer> ch = Channel.make();
+        ch.close();
+
+        boolean ok = ch.trySend(2);
+
+        assertFalse(ok);
+    }
+
+    @Test
+    @DisplayName("trySend() for sync channels should handle finite timeouts when timeout is not expired")
+    public void trySendSyncHandleFiniteTimeoutsNotExpired() throws InterruptedException {
+        Channel<String> ch = Channel.make();
+        Instant start = Instant.now();
+
+        Thread thread = runInThread(() -> {
+            Thread.sleep(10);
+            ch.recv();
+        });
+
+        boolean ok = ch.trySend("test", 200);
+        thread.join(2000);
+        Instant finish = Instant.now();
+
+        assertTrue(ok);
+        assertTrue(Duration.between(start, finish).toMillis() >= 10);
+        assertTrue(Duration.between(start, finish).toMillis() < 2000);
+    }
+
+    @Test
+    @DisplayName("trySend() for sync channels should handle finite timeouts when timeout is expired")
+    public void trySendSyncHandleFiniteTimeoutsExpired() throws InterruptedException {
+        Channel<String> ch = Channel.make();
+        Instant start = Instant.now();
+
+        Thread thread = runInThread(() -> {
+            Thread.sleep(100);
+            ch.recv();
+        });
+
+        boolean ok = ch.trySend("test", 10);
+        ch.send("test1");
+
+        thread.join(2000);
+        Instant finish = Instant.now();
+
+        assertFalse(ok);
+        assertTrue(Duration.between(start, finish).toMillis() >= 10);
+        assertTrue(Duration.between(start, finish).toMillis() < 2000);
+    }
+
+    @Test
+    @DisplayName("trySend() for sync channels should handle infinite timeouts when data is ready")
+    public void trySendSyncHandleInfiniteTimeoutsDataReady() throws InterruptedException {
+        Channel<String> ch = Channel.make();
+        Instant start = Instant.now();
+
+        Thread thread = runInThread(() -> {
+            Thread.sleep(10);
+            ch.recv();
+        });
+
+        boolean ok = ch.trySend("test", Long.MAX_VALUE);
+
+        thread.join(2000);
+        Instant finish = Instant.now();
+
+        assertTrue(ok);
+        assertTrue(Duration.between(start, finish).toMillis() >= 10);
+        assertTrue(Duration.between(start, finish).toMillis() < 2000);
+    }
+
+    @Test
+    @DisplayName("trySend() for sync channels should handle infinite timeouts when data is not ready")
+    public void trySendSyncHandleInfiniteTimeoutsDataNotReady() throws InterruptedException {
+        Channel<String> ch = Channel.make();
+        Instant start = Instant.now();
+
+        Thread thread = runInThread(() -> ch.trySend("test", Long.MAX_VALUE));
+
+        thread.join(50);
+        Instant finish = Instant.now();
+
+        assertTrue(thread.isAlive());
+        assertTrue(Duration.between(start, finish).toMillis() >= 50);
+        thread.interrupt();
     }
 
     private Thread runInThread(Interruptable f) {
