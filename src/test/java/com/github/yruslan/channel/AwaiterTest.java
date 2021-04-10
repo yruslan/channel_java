@@ -36,7 +36,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class AwaiterSuite {
+public class AwaiterTest {
     @Test
     public void immediateAwaitorShouldAlwaysReturnFalse() {
         Awaiter awaiter = new Awaiter(0L);

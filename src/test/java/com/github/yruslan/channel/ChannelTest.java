@@ -36,7 +36,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class ChannelSuite {
+public class ChannelTest {
     @Test
     @DisplayName("work for asynchronous channels in a single threaded setup")
     public void asyncChannelsShouldWorkInSingleThread() throws InterruptedException {
@@ -309,6 +309,126 @@ public class ChannelSuite {
         Instant start = Instant.now();
 
         Thread thread = runInThread(() -> ch.trySend("test", Long.MAX_VALUE));
+
+        thread.join(50);
+        Instant finish = Instant.now();
+
+        assertTrue(thread.isAlive());
+        assertTrue(Duration.between(start, finish).toMillis() >= 50);
+        thread.interrupt();
+    }
+
+    @Test
+    @DisplayName("trySend() for async channels handle non-blocking way when data is available")
+    public void trySendAsyncNonBlockingDataAvailable() throws InterruptedException {
+        Channel<String> ch = Channel.make(1);
+
+        boolean ok = ch.trySend("test", 0);
+
+        assertTrue(ok);
+    }
+
+    @Test
+    @DisplayName("trySend() for async channels handle non-blocking way when data is not available")
+    public void trySendAsyncNonBlockingDataNotAvailable() throws InterruptedException {
+        Channel<String> ch = Channel.make(1);
+
+        boolean ok1 = ch.trySend("test1", 0);
+        boolean ok2 = ch.trySend("test2", 0);
+
+        assertTrue(ok1);
+        assertFalse(ok2);
+    }
+
+    @Test
+    @DisplayName("trySend() for async channels should return false on a closed channel")
+    public void trySendAsyncNonBlockingDataClosedChannel() throws InterruptedException {
+        Channel<Integer> ch = Channel.make(1);
+        ch.close();
+
+        boolean ok = ch.trySend(2);
+
+        assertFalse(ok);
+    }
+
+    @Test
+    @DisplayName("trySend() for async channels should handle finite timeouts when timeout is not expired")
+    public void trySendAsyncHandleFiniteTimeoutsNotExpired() throws InterruptedException {
+        Channel<String> ch = Channel.make(1);
+        Instant start = Instant.now();
+
+        Thread thread = runInThread(() -> {
+            Thread.sleep(10);
+            ch.recv();
+        });
+
+        boolean ok1 = ch.trySend("test1", 0);
+        boolean ok2 = ch.trySend("test2", 200);
+        thread.join(2000);
+        Instant finish = Instant.now();
+
+        assertTrue(ok1);
+        assertTrue(ok2);
+        assertTrue(Duration.between(start, finish).toMillis() >= 10);
+        assertTrue(Duration.between(start, finish).toMillis() < 2000);
+    }
+
+    @Test
+    @DisplayName("trySend() for async channels should handle finite timeouts when timeout is expired")
+    public void trySendAsyncHandleFiniteTimeoutsExpired() throws InterruptedException {
+        Channel<String> ch = Channel.make(1);
+        Instant start = Instant.now();
+
+        Thread thread = runInThread(() -> {
+            Thread.sleep(100);
+            ch.recv();
+        });
+
+        boolean ok1 = ch.trySend("test1", 0);
+        boolean ok2 = ch.trySend("test2", 10);
+
+        thread.join(2000);
+        Instant finish = Instant.now();
+
+        assertTrue(ok1);
+        assertFalse(ok2);
+        assertTrue(Duration.between(start, finish).toMillis() >= 10);
+        assertTrue(Duration.between(start, finish).toMillis() < 2000);
+    }
+
+    @Test
+    @DisplayName("trySend() for async channels should handle infinite timeouts when data is ready")
+    public void trySendAsyncHandleInfiniteTimeoutsDataReady() throws InterruptedException {
+        Channel<String> ch = Channel.make(1);
+        Instant start = Instant.now();
+
+        Thread thread = runInThread(() -> {
+            Thread.sleep(10);
+            ch.recv();
+        });
+
+        boolean ok1 = ch.trySend("test1", 0);
+        boolean ok2 = ch.trySend("test2", Long.MAX_VALUE);
+
+        thread.join(2000);
+        Instant finish = Instant.now();
+
+        assertTrue(ok1);
+        assertTrue(ok2);
+        assertTrue(Duration.between(start, finish).toMillis() >= 10);
+        assertTrue(Duration.between(start, finish).toMillis() < 2000);
+    }
+
+    @Test
+    @DisplayName("trySend() for async channels should handle infinite timeouts when data is not ready")
+    public void trySendAsyncHandleInfiniteTimeoutsDataNotReady() throws InterruptedException {
+        Channel<String> ch = Channel.make(1);
+        Instant start = Instant.now();
+
+        Thread thread = runInThread(() -> {
+            ch.trySend("test1", 0);
+            ch.trySend("test2", Long.MAX_VALUE);
+        });
 
         thread.join(50);
         Instant finish = Instant.now();
