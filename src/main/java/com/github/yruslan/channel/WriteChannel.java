@@ -31,6 +31,7 @@ public interface WriteChannel<T> extends ChannelLike {
     boolean trySend(T value);
     boolean trySend(T value, long timeoutMs) throws InterruptedException;
 
+    // ToDo Add sender without the runnable object
     Selector sender(T value, Runnable action);
 
     void close() throws InterruptedException;

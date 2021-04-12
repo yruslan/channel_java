@@ -35,6 +35,7 @@ import java.util.ArrayList;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static com.github.yruslan.channel.Utils.*;
 
 public class ChannelTest {
     @Test
@@ -437,17 +438,5 @@ public class ChannelTest {
         assertTrue(Duration.between(start, finish).toMillis() >= 50);
         thread.interrupt();
     }
-
-    private Thread runInThread(Interruptable f) {
-        Thread thread = new Thread(() -> {
-            try {
-                f.run();
-            } catch (InterruptedException ignored) {
-            }
-        });
-        thread.start();
-        return thread;
-    }
-
 
 }

@@ -102,7 +102,7 @@ public abstract class Channel<T> implements ReadChannel<T>, WriteChannel<T> {
         while (true) {
             lock.lock();
             readers += 1;
-            while (!closed && !hasCapacity()) {
+            while (!closed && !hasMessages()) {
                 crd.await();
             }
             readers -= 1;
@@ -322,7 +322,7 @@ public abstract class Channel<T> implements ReadChannel<T>, WriteChannel<T> {
                     if (status == AVAILABLE && s.sendRecv()) {
                         s.afterAction();
                         int j;
-                        for (j = 0; j <= sel.size(); j++) {
+                        for (j = 0; j < sel.size(); j++) {
                             sel.get(j).channel.delWriterWaiter(sem);
                         }
                         return true;
@@ -334,7 +334,7 @@ public abstract class Channel<T> implements ReadChannel<T>, WriteChannel<T> {
                     if (status == AVAILABLE && s.sendRecv()) {
                         s.afterAction();
                         int j;
-                        for (j = 0; j <= sel.size(); j++) {
+                        for (j = 0; j < sel.size(); j++) {
                             sel.get(j).channel.delReaderWaiter(sem);
                         }
                         return true;
@@ -354,7 +354,7 @@ public abstract class Channel<T> implements ReadChannel<T>, WriteChannel<T> {
 
             if (!success) {
                 int j;
-                for (j = 0; j <= sel.size(); j++) {
+                for (j = 0; j < sel.size(); j++) {
                     if (sel.get(j).isSender) {
                         sel.get(j).channel.delWriterWaiter(sem);
                     } else {
