@@ -201,7 +201,7 @@ public class AsyncChannel<T> extends Channel<T> {
     final public boolean isClosed() {
         lock.lock();
         boolean result;
-        if (q.isEmpty()) {
+        if (!q.isEmpty()) {
             result = false;
         } else {
             result = closed;
