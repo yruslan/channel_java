@@ -24,7 +24,9 @@
  * For more information, please refer to <http://opensource.org/licenses/MIT>
  */
 
-package com.github.yruslan.channel;
+package com.github.yruslan.channel.impl;
+
+import com.github.yruslan.channel.Channel;
 
 import java.util.Optional;
 import java.util.concurrent.Semaphore;

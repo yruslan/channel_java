@@ -34,8 +34,8 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Optional;
 
+import static com.github.yruslan.channel.utils.Utils.runInThread;
 import static org.junit.jupiter.api.Assertions.*;
-import static com.github.yruslan.channel.Utils.*;
 
 public class ChannelTest {
     @Test

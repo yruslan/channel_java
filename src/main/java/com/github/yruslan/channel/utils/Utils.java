@@ -1,6 +1,6 @@
-package com.github.yruslan.channel;
+package com.github.yruslan.channel.utils;
 
-class Utils {
+public class Utils {
     public static Thread runInThread(Interruptable f) {
         Thread thread = new Thread(() -> {
             try {

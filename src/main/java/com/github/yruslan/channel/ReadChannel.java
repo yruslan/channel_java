@@ -26,6 +26,9 @@
 
 package com.github.yruslan.channel;
 
+import com.github.yruslan.channel.impl.ChannelLike;
+import com.github.yruslan.channel.impl.Selector;
+
 import java.util.Optional;
 import java.util.function.Consumer;
 

@@ -37,8 +37,8 @@ import java.util.Random;
 
 import static com.github.yruslan.channel.Channel.make;
 import static com.github.yruslan.channel.Channel.select;
-import static com.github.yruslan.channel.Utils.runInThread;
-import static com.github.yruslan.channel.Utils.sleep;
+import static com.github.yruslan.channel.utils.Utils.runInThread;
+import static com.github.yruslan.channel.utils.Utils.sleep;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class GuaranteesTest {
