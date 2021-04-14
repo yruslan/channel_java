@@ -24,17 +24,47 @@
  * For more information, please refer to <http://opensource.org/licenses/MIT>
  */
 
-package com.github.yruslan.channel;
+package com.github.yruslan.channel.impl;
 
-public abstract class Selector {
-    boolean isSender;
-    ChannelLike channel;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Condition;
 
-    Selector(boolean isSender, ChannelLike channel) {
-        this.isSender = isSender;
-        this.channel = channel;
+public final class Awaiter {
+    private final long timeoutMilli;
+    private final Instant startInstant;
+
+    public Awaiter() {
+        timeoutMilli = Long.MAX_VALUE;
+        startInstant = Instant.now();
     }
 
-    abstract boolean sendRecv();
-    abstract void afterAction();
+    public Awaiter(long timeoutMilli) {
+        this.timeoutMilli = timeoutMilli;
+        startInstant = Instant.now();
+    }
+
+    public boolean await(Condition cond) throws InterruptedException {
+        if (timeoutMilli == 0L) {
+            return false;
+        }
+        if (timeoutMilli == Long.MAX_VALUE) {
+            cond.await();
+            return true;
+        } else {
+            return cond.await(timeLeft(), TimeUnit.MILLISECONDS);
+        }
+    }
+
+    private long elapsedTime() {
+        Instant now = Instant.now();
+        return Duration.between(startInstant, now).toMillis();
+    }
+
+    private long timeLeft() {
+        long timeLeft = timeoutMilli - elapsedTime();
+        return Math.max(timeLeft, 0L);
+    }
+
 }

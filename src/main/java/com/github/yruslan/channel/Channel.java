@@ -26,6 +26,11 @@
 
 package com.github.yruslan.channel;
 
+import com.github.yruslan.channel.impl.AsyncChannel;
+import com.github.yruslan.channel.impl.Selector;
+import com.github.yruslan.channel.impl.SimpleLinkedList;
+import com.github.yruslan.channel.impl.SyncChannel;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Optional;
@@ -122,12 +127,12 @@ public abstract class Channel<T> implements ReadChannel<T>, WriteChannel<T> {
     public final Selector sender(T value, Runnable action) {
         return new Selector(true, this) {
             @Override
-            boolean sendRecv() {
+            public boolean sendRecv() {
                 return trySend(value);
             }
 
             @Override
-            void afterAction() {
+            public void afterAction() {
                 action.run();
             }
         };
@@ -139,14 +144,14 @@ public abstract class Channel<T> implements ReadChannel<T>, WriteChannel<T> {
             T el = null;
 
             @Override
-            boolean sendRecv() {
+            public boolean sendRecv() {
                 Optional<T> optVal = tryRecv();
                 optVal.ifPresent(t -> el = t);
                 return optVal.isPresent();
             }
 
             @Override
-            void afterAction() {
+            public void afterAction() {
                 action.accept(el);
             }
         };

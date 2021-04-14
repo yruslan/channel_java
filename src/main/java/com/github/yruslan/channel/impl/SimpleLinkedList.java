@@ -24,7 +24,7 @@
  * For more information, please refer to <http://opensource.org/licenses/MIT>
  */
 
-package com.github.yruslan.channel;
+package com.github.yruslan.channel.impl;
 
 import java.util.NoSuchElementException;
 import java.util.function.Consumer;

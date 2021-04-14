@@ -26,6 +26,9 @@
 
 package com.github.yruslan.channel;
 
+import com.github.yruslan.channel.impl.ChannelLike;
+import com.github.yruslan.channel.impl.Selector;
+
 public interface WriteChannel<T> extends ChannelLike {
     void send(T value) throws InterruptedException;
     boolean trySend(T value);

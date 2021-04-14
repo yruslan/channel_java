@@ -24,7 +24,9 @@
  * For more information, please refer to <http://opensource.org/licenses/MIT>
  */
 
-package com.github.yruslan.channel;
+package com.github.yruslan.channel.impl;
+
+import com.github.yruslan.channel.Channel;
 
 import java.util.ArrayDeque;
 import java.util.Optional;
@@ -35,7 +37,7 @@ public class AsyncChannel<T> extends Channel<T> {
     protected int maxCapacity;
     protected Queue<T> q;
 
-    AsyncChannel(int maxCapacity) {
+    public AsyncChannel(int maxCapacity) {
         this.maxCapacity = maxCapacity;
         this.q = new ArrayDeque<>();
     }
