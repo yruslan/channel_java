@@ -26,14 +26,11 @@
 
 package com.github.yruslan.channel;
 
-import com.sun.tools.javac.util.Pair;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Random;
+import java.util.*;
 
 import static com.github.yruslan.channel.Channel.make;
 import static com.github.yruslan.channel.Channel.select;
@@ -93,8 +90,6 @@ public class GuaranteesTest {
     @Test
     @DisplayName("Fairness for sync channels is provided when several channels are active, a channel is selected randomly")
     public void fairnessSyncIsProvidedWhenSeveralChannelsAreActive() throws InterruptedException {
-        ArrayList<Pair<Integer, Integer>> results = new ArrayList<>();
-
         Channel<Integer> in1 = make();
         Channel<Integer> in2 = make();
 
@@ -108,8 +103,6 @@ public class GuaranteesTest {
     @Test
     @DisplayName("Fairness for async channels is provided when several channels are active, a channel is selected randomly")
     public void fairnessAsyncIsProvidedWhenSeveralChannelsAreActive() throws InterruptedException {
-        ArrayList<Pair<Integer, Integer>> results = new ArrayList<>();
-
         Channel<Integer> in1 = make(1);
         Channel<Integer> in2 = make(1);
 
@@ -123,8 +116,6 @@ public class GuaranteesTest {
     @Test
     @DisplayName("Fairness for sync/async 1 channels is provided when several channels are active, a channel is selected randomly")
     public void fairnessMix1IsProvidedWhenSeveralChannelsAreActive() throws InterruptedException {
-        ArrayList<Pair<Integer, Integer>> results = new ArrayList<>();
-
         Channel<Integer> in1 = make(1);
         Channel<Integer> in2 = make(1);
 
@@ -138,8 +129,6 @@ public class GuaranteesTest {
     @Test
     @DisplayName("Fairness for sync/async 2 channels is provided when several channels are active, a channel is selected randomly")
     public void fairnessMix2IsProvidedWhenSeveralChannelsAreActive() throws InterruptedException {
-        ArrayList<Pair<Integer, Integer>> results = new ArrayList<>();
-
         Channel<Integer> in1 = make();
         Channel<Integer> in2 = make();
 
@@ -151,7 +140,7 @@ public class GuaranteesTest {
     }
 
     private void testFairness(Channel<Integer> in1, Channel<Integer> in2, Channel<Integer> out1, Channel<Integer> out2, Channel<Boolean> finish) throws InterruptedException {
-        ArrayList<Pair<Integer, Integer>> results = new ArrayList<>();
+        ArrayList<Map.Entry<Integer, Integer>> results = new ArrayList<>();
 
         Thread[] workers = new Thread[4];
 
@@ -190,7 +179,7 @@ public class GuaranteesTest {
         threadBalancer.join();
 
         // Correctness
-        int sum = results.stream().map((p) -> p.snd).reduce(0, Integer::sum);
+        int sum = results.stream().map(Map.Entry::getValue).reduce(0, Integer::sum);
         assertEquals(results.size(), 100);
         assertEquals(sum, 10100);
 
@@ -199,8 +188,8 @@ public class GuaranteesTest {
         for (int i = 0; i < 4; i++) {
             processedBy[i] = 0;
         }
-        for (Pair<Integer, Integer> result : results) {
-            processedBy[result.fst] += 1;
+        for (Map.Entry<Integer, Integer> result : results) {
+            processedBy[result.getKey()] += 1;
         }
         assertTrue(Arrays.stream(processedBy).min().getAsInt() > 15);
         assertTrue(Arrays.stream(processedBy).max().getAsInt() < 35);
@@ -235,13 +224,13 @@ public class GuaranteesTest {
         }
     }
 
-    private void worker(int num, ReadChannel<Integer> input1, ArrayList<Pair<Integer, Integer>> results) throws InterruptedException {
+    private void worker(int num, ReadChannel<Integer> input1, ArrayList<Map.Entry<Integer, Integer>> results) throws InterruptedException {
         Random rand = new Random();
 
         input1.foreach((x) -> {
             sleep(rand.nextInt(5) + 10);
             synchronized (results) {
-                results.add(Pair.of(num, 2 * x));
+                results.add(new AbstractMap.SimpleEntry<>(num, 2 * x));
             }
         });
     }
