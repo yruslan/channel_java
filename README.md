@@ -1,4 +1,6 @@
 # Channel - a port of GoLang channels to Java
+[![Build](https://github.com/yruslan/channel_java/workflows/Build/badge.svg)](https://github.com/yruslan/channel_java/actions)
+
 > Go channels provide synchronization and messaging, 'select' provides multi-way concurrent control.
 >
 > _Rob Pike_ - [Concurrency is not parallelism](https://www.youtube.com/watch?v=oV9rvDllKEg)
