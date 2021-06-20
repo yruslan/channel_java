@@ -240,9 +240,11 @@ public class SyncChannel<T> extends Channel<T> {
 
     @Override
     final protected Optional<T> fetchValueOpt() {
+        if (syncValue.isPresent()) {
+            notifyWriters();
+        }
         Optional<T> v = syncValue;
         syncValue = Optional.empty();
-        notifyWriters();
         return v;
     }
 }
