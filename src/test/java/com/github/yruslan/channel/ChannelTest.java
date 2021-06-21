@@ -482,7 +482,7 @@ public class ChannelTest {
         assertTrue(v.isPresent());
         assertEquals(v.get(), "test");
         assertTrue(Duration.between(start, finish).toMillis() >= 10L);
-        assertTrue(Duration.between(start, finish).toMillis() < 2000L);
+        assertTrue(Duration.between(start, finish).toMillis() < 200L);
     }
 
     @Test
@@ -534,4 +534,99 @@ public class ChannelTest {
         assertTrue(Duration.between(start, finish).toMillis() >= 50L);
         thread.interrupt();
     }
+
+    @Test
+    @DisplayName("tryRecv() for async channels should handle non-blocking way when data is available")
+    public void tryRecvAsyncNonBlockingDataAvailable() throws InterruptedException {
+        Channel<String> ch = Channel.make(1);
+
+        ch.send("test");
+
+        Optional<String> v = ch.tryRecv(0);
+
+        assertTrue(v.isPresent());
+        assertEquals(v.get(), "test");
+    }
+
+    @Test
+    @DisplayName("tryRecv() for async channels should handle non-blocking way when data is not available")
+    public void tryRecvAsyncNonBlockingDataNotAvailable() throws InterruptedException {
+        Channel<String> ch = Channel.make(1);
+
+        Optional<String> v = ch.tryRecv(0);
+
+        assertFalse(v.isPresent());
+    }
+
+    @Test
+    @DisplayName("tryRecv() for async channels should handle finite timeouts when timeout is not expired")
+    public void tryRecvAsyncFiniteTimeoutsNotExpired() throws InterruptedException {
+        Channel<String> ch = Channel.make(1);
+
+        Thread thread = runInThread(() -> {
+            Thread.sleep(10L);
+            ch.send("test");
+        });
+
+        Instant start = Instant.now();
+        Optional<String> v = ch.tryRecv(200L);
+        thread.join(2000L);
+        Instant finish = Instant.now();
+
+        assertTrue(v.isPresent());
+        assertEquals(v.get(), "test");
+        assertTrue(Duration.between(start, finish).toMillis() >= 10L);
+        assertTrue(Duration.between(start, finish).toMillis() < 200L);
+    }
+
+    @Test
+    @DisplayName("tryRecv() for async channels should handle finite timeouts when timeout is expired")
+    public void tryRecvAsyncFiniteTimeoutsExpired() throws InterruptedException {
+        Channel<String> ch = Channel.make(1);
+
+        Instant start = Instant.now();
+        Optional<String> v = ch.tryRecv(10L);
+        Instant finish = Instant.now();
+
+        assertFalse(v.isPresent());
+        assertTrue(Duration.between(start, finish).toMillis() >= 10L);
+        assertTrue(Duration.between(start, finish).toMillis() < 1000L);
+    }
+
+    @Test
+    @DisplayName("tryRecv() for async channels should handle infinite timeouts when data is available")
+    public void tryRecvAsyncInfiniteTimeoutsDataAvailable() throws InterruptedException {
+        Channel<String> ch = Channel.make(1);
+
+        Thread thread = runInThread(() -> {
+            Thread.sleep(10L);
+            ch.send("test");
+        });
+
+        Instant start = Instant.now();
+        Optional<String> v = ch.tryRecv(Long.MAX_VALUE);
+        thread.join(2000L);
+        Instant finish = Instant.now();
+
+        assertTrue(v.isPresent());
+        assertEquals(v.get(), "test");
+        assertTrue(Duration.between(start, finish).toMillis() >= 10L);
+        assertTrue(Duration.between(start, finish).toMillis() < 2000L);
+    }
+
+    @Test
+    @DisplayName("tryRecv() for sync channels should handle infinite timeouts when data is not available")
+    public void tryRecvAsyncInfiniteTimeoutsDataNotAvailable() throws InterruptedException {
+        Channel<String> ch = Channel.make(1);
+
+        Instant start = Instant.now();
+        Thread thread = runInThread(() -> ch.tryRecv(Long.MAX_VALUE));
+        thread.join(50L);
+        Instant finish = Instant.now();
+
+        assertTrue(thread.isAlive());
+        assertTrue(Duration.between(start, finish).toMillis() >= 50L);
+        thread.interrupt();
+    }
+
 }
